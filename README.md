@@ -4,6 +4,10 @@ Dockproxy is a nginx based proxy container meant to be placed in front of the do
 
 This build integrates http auth via the [Auth PAM](http://web.iti.upv.es/~sto/nginx/) module available in the nginx-extras package.
 
+Additional this fork includes read-only (w/o authentication) server on port 80
+
+Configuration files 
+
 ### Contents
  * [Configuration and Usage](#configuration-and-Usage)
   * [TL;DR](#tldr)
@@ -25,8 +29,8 @@ This build integrates http auth via the [Auth PAM](http://web.iti.upv.es/~sto/ng
 
 #### TL;DR
 
-1. Adjust ldap conf in `nslcd/nslcd.conf`
-2. Place ssl cert (**dockproxy.key** and **dockproxy.crt**) in `nginx/ssl`
+1. Adjust ldap conf in `nslcd/nslcd.conf` or override with docker volume
+2. Bind ssl certificates via docker volume (for ex. --volume=/etc/server.crt:/etc/nginx/ssl/dockproxy.crt)
 3. Build and take your pick of executing the following:
  * If not using a linked container:
 `docker run -d -p 443:443 -e REG_ADDR=[registry_address] -e REG_PRT=[registry_port] dockproxy`
@@ -42,8 +46,6 @@ By default, search is disabled. To enable it, add the following environmental va
 
 I just need to get this out of the way:
 
-**DO NOT USE WITHOUT CONFIGURING THE NEEDED SCRIPTS FIRST.**
-
 Before building the image the ldap config must be modified and new ssl certs generated.
 
 
@@ -52,6 +54,7 @@ The file `nslcd/nslcd.conf` requires several base settings to work correctly. Wh
 
 ##### Example Configuration:
 
+###### For AD:
 ```
 uid nslcd
 gid nslcd
@@ -73,8 +76,6 @@ filter shadow (objectClass=user)
 map    shadow    uid    sAMAccountName
 ```
 
-
-
 * `uri` - The LDAP uri. Most likely `uri ldaps://yourdomaincontrollerhere`
 * `base` - The base DN used as the search base.
 * `binddn` - the user account used to do the authentication
@@ -91,6 +92,25 @@ map    shadow    uid    sAMAccountName
 * `map passwd` and `map shadow` - For Active Directory, just leave these to the default map to `sAMAccountName`
 
 
+
+###### For OpenLDAP:
+```
+uid nslcd
+gid nslcd
+
+ldap_version 3
+tls_reqcert neves
+ignorecase yes
+referrals no
+
+uri ldaps://example.com
+base dc=example,dc=com
+binddn cn=imauser,cn=users,dc=example,dc=com
+bindpw imasecret
+
+filter password (&(objectClass=posixAccount)(memberof=cn=docker,dc=example,dc=com))
+filter shadow (&(objectClass=posixAccount)(memberof=cn=docker,dc=example,dc=com))
+
 ----------
 #### SSL Config
 The nginx config is looking for `dockproxy.key` and `dockproxy.crt`. These should be placed in the `nginx/ssl/` folder when the container is built.
@@ -104,11 +124,11 @@ For building and testing purposes, execute the following in the dockproxy folder
 
 Usage is pretty simple. After building the container with the needed config changes. Just execute the following:
 
-`docker run -d -p 443:443 -e REG_ADDR=[registry_address] -e REG_PRT=[registry_port] dockproxy`
+`docker run -d -p 80:80 -p 443:443 -e REG_ADDR=[registry_address] -e REG_PRT=[registry_port] dockproxy`
 
 or
 
-`docker run -d -p 443:443 -e REG_ADDR=[registry_address] -e REG_PRT=[registry_port] -e REG_SEARCH=enabled dockproxy`
+`docker run -d -p 80:80 -p 443:443 -e REG_ADDR=[registry_address] -e REG_PRT=[registry_port] -e REG_SEARCH=enabled dockproxy`
 
 if you wish to enable searching of the registry.
 

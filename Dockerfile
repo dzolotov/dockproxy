@@ -1,4 +1,5 @@
-# mrbobbytables/dockproxy
+# Docker ldap proxy (with readonly access too)
+# based on mrbobbytables/dockproxy
 #
 # VERSION   1.0.0
 #
@@ -7,10 +8,11 @@
 
 FROM ubuntu:14.04
 
+MAINTEINER: mrbobbytables, Dmitrii Zolotov <dzolotov@herzen.spb.ru>
+
 RUN apt-get update
 
-
-#DEBIAN_FRONTEND=noniteractive is used to suppress prompts for libpam-ldapd
+#DEBIAN_FRONTEND=noninteractive is used to suppress prompts for libpam-ldapd
 RUN DEBIAN_FRONTEND=noninteractive \
     apt-get install -y nginx-extras \
     libpam-ldapd \
@@ -33,6 +35,6 @@ RUN chmod 640 /etc/nslcd.conf && \
     ln -s /etc/nginx/sites-available/dockproxy /etc/nginx/sites-enabled/dockproxy
 
 
-EXPOSE 443
+EXPOSE 80 443
 
 CMD ["./init.sh"]
