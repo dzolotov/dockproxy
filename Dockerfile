@@ -8,7 +8,7 @@
 
 FROM ubuntu:14.04
 
-MAINTEINER: mrbobbytables, Dmitrii Zolotov <dzolotov@herzen.spb.ru>
+MAINTAINER mrbobbytables, Dmitrii Zolotov <dzolotov@herzen.spb.ru>
 
 RUN apt-get update
 
