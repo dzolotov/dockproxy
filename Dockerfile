@@ -16,7 +16,7 @@ RUN apt-get update
 RUN DEBIAN_FRONTEND=noninteractive \
     apt-get install -y nginx-extras \
     libpam-ldapd \
-    supervisor
+    supervisor && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 #Copy configs to their needed locations
 COPY init.sh ./init.sh
